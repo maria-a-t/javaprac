@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="internet-shop-postgres" default="help" basedir=".">
+  <!--
+    Targets:
+      ant create
+      ant init
+      ant show
+      ant clear
+      ant reset
+  -->
+
+  <property name="psql" value="psql"/>
+  <property name="db.host" value="localhost"/>
+  <property name="db.port" value="5432"/>
+  <property name="db.name" value="internet_shop"/>
+  <property name="db.user" value="maria"/>
+  <property name="db.password" value=""/>
+
+  <target name="help">
+    <echo>
+Targets:
+  ant create
+  ant init
+  ant show
+  ant clear
+  ant reset
+    </echo>
+  </target>
+
+  <target name="create">
+    <!-- create.sql запускается из системной БД postgres -->
+    <exec executable="${psql}" failonerror="true">
+      <env key="PGPASSWORD" value="${db.password}"/>
+      <arg value="-X"/>
+      <arg value="-v"/><arg value="ON_ERROR_STOP=1"/>
+      <arg value="-h"/><arg value="${db.host}"/>
+      <arg value="-p"/><arg value="${db.port}"/>
+      <arg value="-U"/><arg value="${db.user}"/>
+      <arg value="-d"/><arg value="postgres"/>
+      <arg value="-f"/><arg value="create.sql"/>
+    </exec>
+  </target>
+
+  <target name="init" depends="create">
+    <exec executable="${psql}" failonerror="true">
+      <env key="PGPASSWORD" value="${db.password}"/>
+      <arg value="-X"/>
+      <arg value="-v"/><arg value="ON_ERROR_STOP=1"/>
+      <arg value="-h"/><arg value="${db.host}"/>
+      <arg value="-p"/><arg value="${db.port}"/>
+      <arg value="-U"/><arg value="${db.user}"/>
+      <arg value="-d"/><arg value="${db.name}"/>
+      <arg value="-f"/><arg value="init.sql"/>
+    </exec>
+  </target>
+
+  <target name="clear">
+    <exec executable="${psql}" failonerror="true">
+      <env key="PGPASSWORD" value="${db.password}"/>
+      <arg value="-X"/>
+      <arg value="-v"/><arg value="ON_ERROR_STOP=1"/>
+      <arg value="-h"/><arg value="${db.host}"/>
+      <arg value="-p"/><arg value="${db.port}"/>
+      <arg value="-U"/><arg value="${db.user}"/>
+      <arg value="-d"/><arg value="${db.name}"/>
+      <arg value="-c"/>
+      <arg value="TRUNCATE TABLE delivery, order_items, orders, order_statuses, product_attributes, products, customers, manufacturers, categories RESTART IDENTITY CASCADE;"/>
+    </exec>
+  </target>
+
+  <target name="reset" depends="clear">
+    <antcall target="init"/>
+  </target>
+
+  <target name="show">
+    <exec executable="${psql}" failonerror="true">
+      <env key="PGPASSWORD" value="${db.password}"/>
+      <arg value="-X"/>
+      <arg value="-v"/><arg value="ON_ERROR_STOP=1"/>
+      <arg value="-P"/><arg value="pager=off"/>
+      <arg value="-h"/><arg value="${db.host}"/>
+      <arg value="-p"/><arg value="${db.port}"/>
+      <arg value="-U"/><arg value="${db.user}"/>
+      <arg value="-d"/><arg value="${db.name}"/>
+
+      <arg value="-c"/><arg value="SELECT 'categories' AS table_name, COUNT(*) AS rows FROM categories;"/>
+      <arg value="-c"/><arg value="SELECT * FROM categories ORDER BY category_id;"/>
+
+      <arg value="-c"/><arg value="SELECT 'manufacturers' AS table_name, COUNT(*) AS rows FROM manufacturers;"/>
+      <arg value="-c"/><arg value="SELECT * FROM manufacturers ORDER BY manufacturer_id;"/>
+
+      <arg value="-c"/><arg value="SELECT 'products' AS table_name, COUNT(*) AS rows FROM products;"/>
+      <arg value="-c"/><arg value="SELECT * FROM products ORDER BY product_id;"/>
+
+      <arg value="-c"/><arg value="SELECT 'product_attributes' AS table_name, COUNT(*) AS rows FROM product_attributes;"/>
+      <arg value="-c"/><arg value="SELECT * FROM product_attributes ORDER BY attribute_id;"/>
+
+      <arg value="-c"/><arg value="SELECT 'customers' AS table_name, COUNT(*) AS rows FROM customers;"/>
+      <arg value="-c"/><arg value="SELECT * FROM customers ORDER BY customer_id;"/>
+
+      <arg value="-c"/><arg value="SELECT 'order_statuses' AS table_name, COUNT(*) AS rows FROM order_statuses;"/>
+      <arg value="-c"/><arg value="SELECT * FROM order_statuses ORDER BY status_id;"/>
+
+      <arg value="-c"/><arg value="SELECT 'orders' AS table_name, COUNT(*) AS rows FROM orders;"/>
+      <arg value="-c"/><arg value="SELECT * FROM orders ORDER BY order_id;"/>
+
+      <arg value="-c"/><arg value="SELECT 'order_items' AS table_name, COUNT(*) AS rows FROM order_items;"/>
+      <arg value="-c"/><arg value="SELECT * FROM order_items ORDER BY order_item_id;"/>
+
+      <arg value="-c"/><arg value="SELECT 'delivery' AS table_name, COUNT(*) AS rows FROM delivery;"/>
+      <arg value="-c"/><arg value="SELECT * FROM delivery ORDER BY delivery_id;"/>
+    </exec>
+  </target>
+</project>
