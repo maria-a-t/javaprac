@@ -1,0 +1,5 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+Internet Shop DAO Coverage,ru.msu.internetshop.dao,OrderDao,73,246,15,25,13,56,17,16,2,11
+Internet Shop DAO Coverage,ru.msu.internetshop.dao,CustomerDao,42,157,7,11,7,42,8,15,1,13
+Internet Shop DAO Coverage,ru.msu.internetshop.dao,AbstractDao,11,47,2,2,5,18,3,4,1,4
+Internet Shop DAO Coverage,ru.msu.internetshop.dao,ProductDao,109,424,20,34,15,99,22,28,2,21

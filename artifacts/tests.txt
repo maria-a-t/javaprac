@@ -1,0 +1,26 @@
+Test results
+Suite: InternetShopHibernateSuite
+Total: 18
+Passed: 18
+Failed: 0
+Skipped: 0
+
+Passed methods:
+- CustomerDaoTest.deleteShouldRemoveCustomer
+- CustomerDaoTest.deleteShouldReturnFalseForMissingCustomer
+- CustomerDaoTest.findByIdShouldReturnCustomer
+- CustomerDaoTest.findByIdShouldReturnEmptyForMissingCustomer
+- CustomerDaoTest.saveShouldPersistCustomer
+- CustomerDaoTest.updateShouldModifyCustomer
+- OrderDaoTest.findStatusByOrderIdShouldReturnEmptyForMissingOrder
+- OrderDaoTest.findStatusByOrderIdShouldReturnStatusForExistingOrder
+- OrderDaoTest.placeOrderShouldCreateOrderAndDecreaseStock
+- OrderDaoTest.placeOrderShouldRejectEmptyBasket
+- OrderDaoTest.placeOrderShouldRejectWhenStockIsInsufficient
+- ProductDaoTest.deleteShouldRemoveProduct
+- ProductDaoTest.deleteShouldReturnFalseForMissingProduct
+- ProductDaoTest.findByCriteriaShouldFilterByCategoryManufacturerAndAttribute
+- ProductDaoTest.findByCriteriaShouldReturnEmptyWhenNothingMatches
+- ProductDaoTest.findByIdShouldReturnProductWithLoadedAttributes
+- ProductDaoTest.saveShouldPersistProductWithAttributes
+- ProductDaoTest.updateShouldChangeFieldsAndReplaceAttributes

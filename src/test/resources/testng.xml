@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="InternetShopHibernateSuite">
+    <test name="DAO tests">
+        <classes>
+            <class name="ru.msu.internetshop.dao.ProductDaoTest"/>
+            <class name="ru.msu.internetshop.dao.CustomerDaoTest"/>
+            <class name="ru.msu.internetshop.dao.OrderDaoTest"/>
+        </classes>
+    </test>
+</suite>

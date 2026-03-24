@@ -1,0 +1,13 @@
+JaCoCo DAO coverage
+Instructions: 78.81%
+Branches: 62.07%
+Lines: 84.31%
+Methods: 89.09%
+
+By class:
+- AbstractDao: instructions 81.03%, branches 50.00%, lines 78.26%, methods 80.00%
+- CustomerDao: instructions 78.89%, branches 61.11%, lines 85.71%, methods 92.86%
+- OrderDao: instructions 77.12%, branches 62.50%, lines 81.16%, methods 84.62%
+- ProductDao: instructions 79.55%, branches 62.96%, lines 86.84%, methods 91.30%
+
+Raw JaCoCo CSV: artifacts/jacoco.csv

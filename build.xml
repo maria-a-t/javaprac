@@ -1,12 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="internet-shop-postgres" default="help" basedir=".">
+<project name="internet-shop-postgres" default="help" basedir="." xmlns:jacoco="antlib:org.jacoco.ant">
   <!--
-    Targets:
+    Database targets:
       ant create
       ant init
       ant show
       ant clear
       ant reset
+
+    Java / Hibernate targets:
+      ant resolve
+      ant compile
+      ant compile-tests
+      ant test
+      ant jar
+      ant clean
   -->
 
   <property name="psql" value="psql"/>
@@ -16,19 +24,217 @@
   <property name="db.user" value="maria"/>
   <property name="db.password" value=""/>
 
+  <property name="src.main.java" value="src/main/java"/>
+  <property name="src.main.resources" value="src/main/resources"/>
+  <property name="src.test.java" value="src/test/java"/>
+  <property name="src.test.resources" value="src/test/resources"/>
+  <property name="build.dir" value="build"/>
+  <property name="classes.dir" value="${build.dir}/classes"/>
+  <property name="test.classes.dir" value="${build.dir}/test-classes"/>
+  <property name="dist.dir" value="dist"/>
+  <property name="lib.dir" value="lib"/>
+  <property name="artifacts.dir" value="artifacts"/>
+  <property name="logs.dir" value="${artifacts.dir}/logs"/>
+  <property name="coverage.dir" value="${artifacts.dir}/coverage"/>
+  <property name="coverage.html.dir" value="${coverage.dir}/html"/>
+  <property name="coverage.exec.file" value="${coverage.dir}/jacoco.exec"/>
+  <property name="coverage.xml.file" value="${coverage.dir}/jacoco.xml"/>
+  <property name="coverage.csv.file" value="${coverage.dir}/jacoco.csv"/>
+  <property name="jacoco.version" value="0.8.14"/>
+  <property name="java.target.version" value="1.8"/>
+  <property name="jar.name" value="internet-shop-hibernate.jar"/>
+  <property name="maven.repo" value="https://repo1.maven.org/maven2"/>
+
+  <path id="main.classpath">
+    <fileset dir="${lib.dir}" erroronmissingdir="false">
+      <include name="*.jar"/>
+    </fileset>
+  </path>
+
+  <path id="test.classpath">
+    <path refid="main.classpath"/>
+    <pathelement location="${classes.dir}"/>
+    <pathelement location="${test.classes.dir}"/>
+  </path>
+
   <target name="help">
     <echo>
 Targets:
-  ant create
-  ant init
-  ant show
-  ant clear
-  ant reset
+  ant create          - create PostgreSQL database and schema
+  ant init            - create schema and fill it with initial data
+  ant show            - show data from stage 1 tables
+  ant clear           - truncate all tables
+  ant reset           - clear and reinitialize the database
+  ant resolve         - download Hibernate, JDBC, H2 and TestNG jars into lib/
+  ant compile         - compile main Java sources
+  ant compile-tests   - compile TestNG tests
+  ant test            - run TestNG tests
+  ant coverage        - run TestNG tests with JaCoCo coverage for DAO classes
+  ant jar             - build application jar
+  ant clean           - remove build artifacts
     </echo>
   </target>
 
+  <target name="prepare">
+    <mkdir dir="${build.dir}"/>
+    <mkdir dir="${classes.dir}"/>
+    <mkdir dir="${test.classes.dir}"/>
+    <mkdir dir="${dist.dir}"/>
+    <mkdir dir="${lib.dir}"/>
+    <mkdir dir="${artifacts.dir}"/>
+    <mkdir dir="${logs.dir}"/>
+    <mkdir dir="${coverage.dir}"/>
+  </target>
+
+  <target name="clean">
+    <delete dir="${build.dir}"/>
+    <delete dir="${dist.dir}"/>
+    <delete dir="test-output"/>
+    <delete dir="${coverage.dir}"/>
+  </target>
+
+  <target name="check-libs">
+    <available file="${lib.dir}/hibernate-core-5.6.15.Final.jar" property="lib.hibernate.present"/>
+    <available file="${lib.dir}/postgresql-42.7.3.jar" property="lib.postgresql.present"/>
+    <available file="${lib.dir}/h2-2.2.224.jar" property="lib.h2.present"/>
+    <available file="${lib.dir}/testng-7.7.1.jar" property="lib.testng.present"/>
+
+    <fail unless="lib.hibernate.present">Hibernate jars are missing. Run 'ant resolve' first.</fail>
+    <fail unless="lib.postgresql.present">PostgreSQL JDBC driver is missing. Run 'ant resolve' first.</fail>
+    <fail unless="lib.h2.present">H2 test database jar is missing. Run 'ant resolve' first.</fail>
+    <fail unless="lib.testng.present">TestNG jar is missing. Run 'ant resolve' first.</fail>
+  </target>
+
+  <target name="resolve" depends="prepare">
+    <get src="${maven.repo}/org/hibernate/hibernate-core/5.6.15.Final/hibernate-core-5.6.15.Final.jar" dest="${lib.dir}/hibernate-core-5.6.15.Final.jar" usetimestamp="true"/>
+    <get src="${maven.repo}/org/hibernate/common/hibernate-commons-annotations/5.1.2.Final/hibernate-commons-annotations-5.1.2.Final.jar" dest="${lib.dir}/hibernate-commons-annotations-5.1.2.Final.jar" usetimestamp="true"/>
+    <get src="${maven.repo}/org/jboss/logging/jboss-logging/3.4.3.Final/jboss-logging-3.4.3.Final.jar" dest="${lib.dir}/jboss-logging-3.4.3.Final.jar" usetimestamp="true"/>
+    <get src="${maven.repo}/antlr/antlr/2.7.7/antlr-2.7.7.jar" dest="${lib.dir}/antlr-2.7.7.jar" usetimestamp="true"/>
+    <get src="${maven.repo}/net/bytebuddy/byte-buddy/1.12.18/byte-buddy-1.12.18.jar" dest="${lib.dir}/byte-buddy-1.12.18.jar" usetimestamp="true"/>
+    <get src="${maven.repo}/com/fasterxml/classmate/1.5.1/classmate-1.5.1.jar" dest="${lib.dir}/classmate-1.5.1.jar" usetimestamp="true"/>
+    <get src="${maven.repo}/org/dom4j/dom4j/2.1.3/dom4j-2.1.3.jar" dest="${lib.dir}/dom4j-2.1.3.jar" usetimestamp="true"/>
+    <get src="${maven.repo}/org/jboss/jandex/2.4.2.Final/jandex-2.4.2.Final.jar" dest="${lib.dir}/jandex-2.4.2.Final.jar" usetimestamp="true"/>
+    <get src="${maven.repo}/javax/persistence/javax.persistence-api/2.2/javax.persistence-api-2.2.jar" dest="${lib.dir}/javax.persistence-api-2.2.jar" usetimestamp="true"/>
+    <get src="${maven.repo}/javax/transaction/javax.transaction-api/1.3/javax.transaction-api-1.3.jar" dest="${lib.dir}/javax.transaction-api-1.3.jar" usetimestamp="true"/>
+    <get src="${maven.repo}/javax/xml/bind/jaxb-api/2.3.1/jaxb-api-2.3.1.jar" dest="${lib.dir}/jaxb-api-2.3.1.jar" usetimestamp="true"/>
+    <get src="${maven.repo}/org/glassfish/jaxb/jaxb-runtime/2.3.1/jaxb-runtime-2.3.1.jar" dest="${lib.dir}/jaxb-runtime-2.3.1.jar" usetimestamp="true"/>
+    <get src="${maven.repo}/org/glassfish/jaxb/jaxb-core/2.3.0.1/jaxb-core-2.3.0.1.jar" dest="${lib.dir}/jaxb-core-2.3.0.1.jar" usetimestamp="true"/>
+    <get src="${maven.repo}/javax/activation/javax.activation-api/1.2.0/javax.activation-api-1.2.0.jar" dest="${lib.dir}/javax.activation-api-1.2.0.jar" usetimestamp="true"/>
+    <get src="${maven.repo}/org/glassfish/jaxb/txw2/2.3.1/txw2-2.3.1.jar" dest="${lib.dir}/txw2-2.3.1.jar" usetimestamp="true"/>
+    <get src="${maven.repo}/com/sun/istack/istack-commons-runtime/3.0.7/istack-commons-runtime-3.0.7.jar" dest="${lib.dir}/istack-commons-runtime-3.0.7.jar" usetimestamp="true"/>
+    <get src="${maven.repo}/org/jvnet/staxex/stax-ex/1.8/stax-ex-1.8.jar" dest="${lib.dir}/stax-ex-1.8.jar" usetimestamp="true"/>
+    <get src="${maven.repo}/com/sun/xml/fastinfoset/FastInfoset/1.2.15/FastInfoset-1.2.15.jar" dest="${lib.dir}/FastInfoset-1.2.15.jar" usetimestamp="true"/>
+    <get src="${maven.repo}/org/postgresql/postgresql/42.7.3/postgresql-42.7.3.jar" dest="${lib.dir}/postgresql-42.7.3.jar" usetimestamp="true"/>
+    <get src="${maven.repo}/com/h2database/h2/2.2.224/h2-2.2.224.jar" dest="${lib.dir}/h2-2.2.224.jar" usetimestamp="true"/>
+    <get src="${maven.repo}/org/testng/testng/7.7.1/testng-7.7.1.jar" dest="${lib.dir}/testng-7.7.1.jar" usetimestamp="true"/>
+    <get src="${maven.repo}/com/beust/jcommander/1.82/jcommander-1.82.jar" dest="${lib.dir}/jcommander-1.82.jar" usetimestamp="true"/>
+    <get src="${maven.repo}/org/slf4j/slf4j-api/2.0.17/slf4j-api-2.0.17.jar" dest="${lib.dir}/slf4j-api-2.0.17.jar" usetimestamp="true"/>
+    <get src="${maven.repo}/org/slf4j/slf4j-simple/2.0.17/slf4j-simple-2.0.17.jar" dest="${lib.dir}/slf4j-simple-2.0.17.jar" usetimestamp="true"/>
+    <get src="${maven.repo}/org/jacoco/org.jacoco.ant/${jacoco.version}/org.jacoco.ant-${jacoco.version}-nodeps.jar" dest="${lib.dir}/org.jacoco.ant-${jacoco.version}-nodeps.jar" usetimestamp="true"/>
+    <get src="${maven.repo}/org/jacoco/org.jacoco.agent/${jacoco.version}/org.jacoco.agent-${jacoco.version}-runtime.jar" dest="${lib.dir}/org.jacoco.agent-${jacoco.version}-runtime.jar" usetimestamp="true"/>
+  </target>
+
+  <target name="check-jacoco-libs" depends="check-libs">
+    <available file="${lib.dir}/org.jacoco.ant-${jacoco.version}-nodeps.jar" property="lib.jacoco.ant.present"/>
+    <available file="${lib.dir}/org.jacoco.agent-${jacoco.version}-runtime.jar" property="lib.jacoco.agent.present"/>
+
+    <fail unless="lib.jacoco.ant.present">JaCoCo Ant library is missing. Run 'ant resolve' first.</fail>
+    <fail unless="lib.jacoco.agent.present">JaCoCo agent is missing. Run 'ant resolve' first.</fail>
+  </target>
+
+  <target name="init-jacoco" depends="check-jacoco-libs">
+    <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
+      <classpath>
+        <pathelement location="${lib.dir}/org.jacoco.ant-${jacoco.version}-nodeps.jar"/>
+      </classpath>
+    </taskdef>
+  </target>
+
+  <target name="compile" depends="prepare,check-libs">
+    <javac
+        srcdir="${src.main.java}"
+        destdir="${classes.dir}"
+        source="${java.target.version}"
+        target="${java.target.version}"
+        encoding="UTF-8"
+        debug="true"
+        debuglevel="lines,vars,source"
+        includeantruntime="false">
+      <classpath refid="main.classpath"/>
+    </javac>
+
+    <copy todir="${classes.dir}">
+      <fileset dir="${src.main.resources}"/>
+    </copy>
+  </target>
+
+  <target name="compile-tests" depends="compile">
+    <javac
+        srcdir="${src.test.java}"
+        destdir="${test.classes.dir}"
+        source="${java.target.version}"
+        target="${java.target.version}"
+        encoding="UTF-8"
+        debug="true"
+        debuglevel="lines,vars,source"
+        includeantruntime="false">
+      <classpath refid="test.classpath"/>
+    </javac>
+
+    <copy todir="${test.classes.dir}">
+      <fileset dir="${src.test.resources}"/>
+    </copy>
+  </target>
+
+  <target name="test" depends="compile-tests">
+    <java classname="org.testng.TestNG" fork="true" failonerror="true">
+      <classpath refid="test.classpath"/>
+      <arg value="${test.classes.dir}/testng.xml"/>
+    </java>
+  </target>
+
+  <target name="coverage" depends="compile-tests,init-jacoco">
+    <delete file="${coverage.exec.file}"/>
+    <delete file="${coverage.xml.file}"/>
+    <delete file="${coverage.csv.file}"/>
+    <delete dir="${coverage.html.dir}"/>
+    <mkdir dir="${coverage.html.dir}"/>
+
+    <java classname="org.testng.TestNG" fork="true" failonerror="true">
+      <classpath refid="test.classpath"/>
+      <jvmarg value="-javaagent:${lib.dir}/org.jacoco.agent-${jacoco.version}-runtime.jar=destfile=${coverage.exec.file},append=false,includes=ru.msu.internetshop.dao.*"/>
+      <arg value="${test.classes.dir}/testng.xml"/>
+    </java>
+
+    <jacoco:report>
+      <executiondata>
+        <file file="${coverage.exec.file}"/>
+      </executiondata>
+
+      <structure name="Internet Shop DAO Coverage">
+        <classfiles>
+          <fileset dir="${classes.dir}">
+            <include name="ru/msu/internetshop/dao/*.class"/>
+          </fileset>
+        </classfiles>
+        <sourcefiles encoding="UTF-8">
+          <fileset dir="${src.main.java}">
+            <include name="ru/msu/internetshop/dao/*.java"/>
+          </fileset>
+        </sourcefiles>
+      </structure>
+
+      <html destdir="${coverage.html.dir}"/>
+      <xml destfile="${coverage.xml.file}"/>
+      <csv destfile="${coverage.csv.file}"/>
+    </jacoco:report>
+  </target>
+
+  <target name="jar" depends="compile">
+    <jar destfile="${dist.dir}/${jar.name}" basedir="${classes.dir}"/>
+  </target>
+
   <target name="create">
-    <!-- create.sql запускается из системной БД postgres -->
     <exec executable="${psql}" failonerror="true">
       <env key="PGPASSWORD" value="${db.password}"/>
       <arg value="-X"/>
