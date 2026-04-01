@@ -1,13 +1,17 @@
 JaCoCo DAO coverage
-Instructions: 78.81%
-Branches: 62.07%
-Lines: 84.31%
-Methods: 89.09%
+Instructions: 99.91%
+Branches: 100.00%
+Lines: 99.59%
+Methods: 100.00%
 
 By class:
-- AbstractDao: instructions 81.03%, branches 50.00%, lines 78.26%, methods 80.00%
-- CustomerDao: instructions 78.89%, branches 61.11%, lines 85.71%, methods 92.86%
-- OrderDao: instructions 77.12%, branches 62.50%, lines 81.16%, methods 84.62%
-- ProductDao: instructions 79.55%, branches 62.96%, lines 86.84%, methods 91.30%
+- AbstractDao: instructions 98.04%, branches 100.00%, lines 94.74%, methods 100.00%
+- CustomerDao: instructions 100.00%, branches 100.00%, lines 100.00%, methods 100.00%
+- OrderDao: instructions 100.00%, branches 100.00%, lines 100.00%, methods 100.00%
+- ProductDao: instructions 100.00%, branches 100.00%, lines 100.00%, methods 100.00%
+
+Remaining uncovered code:
+- AbstractDao.rollbackQuietly: the catch branch after transaction.rollback() fails. This is exception-handling fallback, not a normal DAO usage scenario.
 
 Raw JaCoCo CSV: artifacts/jacoco.csv
+Detailed HTML report: artifacts/coverage/html/index.html

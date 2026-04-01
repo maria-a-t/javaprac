@@ -3,6 +3,7 @@
 <suite name="InternetShopHibernateSuite">
     <test name="DAO tests">
         <classes>
+            <class name="ru.msu.internetshop.dao.AbstractDaoTest"/>
             <class name="ru.msu.internetshop.dao.ProductDaoTest"/>
             <class name="ru.msu.internetshop.dao.CustomerDaoTest"/>
             <class name="ru.msu.internetshop.dao.OrderDaoTest"/>

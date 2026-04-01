@@ -17,9 +17,6 @@ public class OrderDao extends AbstractDao {
 
     private static final String INITIAL_STATUS_NAME = "в обработке";
 
-    public OrderDao() {
-    }
-
     public OrderDao(SessionFactory sessionFactory) {
         super(sessionFactory);
     }
@@ -122,7 +119,7 @@ public class OrderDao extends AbstractDao {
         if (request.getCustomerId() == null) {
             throw new IllegalArgumentException("Customer id must not be null");
         }
-        if (request.getProductQuantities() == null || request.getProductQuantities().isEmpty()) {
+        if (request.getProductQuantities().isEmpty()) {
             throw new IllegalArgumentException("Order must contain at least one product");
         }
         if (request.getDeliveryAddress() == null || request.getDeliveryAddress().trim().isEmpty()) {

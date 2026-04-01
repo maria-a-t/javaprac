@@ -2,7 +2,11 @@ package ru.msu.internetshop.dao;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -95,5 +99,151 @@ public class OrderDaoTest extends HibernateDaoTestSupport {
         Optional<String> statusOptional = orderDao.findStatusByOrderId(99999);
 
         Assert.assertFalse(statusOptional.isPresent());
+    }
+
+    @Test
+    public void findByIdShouldReturnExistingOrderWithDeliveryAndItems() {
+        Optional<CustomerOrder> orderOptional = orderDao.findById(dataSet.getExistingOrderId());
+
+        Assert.assertTrue(orderOptional.isPresent());
+        Assert.assertEquals(orderOptional.get().getStatus().getStatusName(), "собран");
+        Assert.assertEquals(orderOptional.get().getItems().size(), 1);
+        Assert.assertNotNull(orderOptional.get().getDelivery());
+        Assert.assertEquals(orderOptional.get().getDelivery().getAddress(), "Санкт-Петербург, Невский пр., д. 25");
+    }
+
+    @Test
+    public void findByIdShouldReturnEmptyForMissingOrder() {
+        Assert.assertFalse(orderDao.findById(99999).isPresent());
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Order request must not be null")
+    public void placeOrderShouldRejectNullRequest() {
+        orderDao.placeOrder(null);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Customer id must not be null")
+    public void placeOrderShouldRejectNullCustomerId() {
+        OrderRequest request = createValidRequest();
+        request.setCustomerId(null);
+
+        orderDao.placeOrder(request);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Delivery address must not be blank")
+    public void placeOrderShouldRejectBlankDeliveryAddress() {
+        OrderRequest request = createValidRequest();
+        request.setDeliveryAddress("   ");
+
+        orderDao.placeOrder(request);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Delivery address must not be blank")
+    public void placeOrderShouldRejectNullDeliveryAddress() {
+        OrderRequest request = createValidRequest();
+        request.setDeliveryAddress(null);
+
+        orderDao.placeOrder(request);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Delivery interval must be provided")
+    public void placeOrderShouldRejectMissingDeliveryInterval() {
+        OrderRequest request = createValidRequest();
+        request.setDeliveryFrom(null);
+
+        orderDao.placeOrder(request);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Delivery interval must be provided")
+    public void placeOrderShouldRejectMissingDeliveryEnd() {
+        OrderRequest request = createValidRequest();
+        request.setDeliveryTo(null);
+
+        orderDao.placeOrder(request);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Delivery end time must not be earlier than start time")
+    public void placeOrderShouldRejectReversedDeliveryInterval() {
+        OrderRequest request = createValidRequest();
+        request.setDeliveryFrom(LocalDateTime.of(2026, 3, 2, 18, 0));
+        request.setDeliveryTo(LocalDateTime.of(2026, 3, 2, 10, 0));
+
+        orderDao.placeOrder(request);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Product id must not be null")
+    public void placeOrderShouldRejectNullProductId() {
+        OrderRequest request = createValidRequest();
+        Map<Integer, Integer> quantities = new LinkedHashMap<>();
+        quantities.put(null, 1);
+        request.setProductQuantities(quantities);
+
+        orderDao.placeOrder(request);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Product quantity must be positive")
+    public void placeOrderShouldRejectNullProductQuantity() {
+        OrderRequest request = createValidRequest();
+        Map<Integer, Integer> quantities = new LinkedHashMap<>();
+        quantities.put(dataSet.getTvProductId(), null);
+        request.setProductQuantities(quantities);
+
+        orderDao.placeOrder(request);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Product quantity must be positive")
+    public void placeOrderShouldRejectZeroProductQuantity() {
+        OrderRequest request = createValidRequest();
+        Map<Integer, Integer> quantities = new LinkedHashMap<>();
+        quantities.put(dataSet.getTvProductId(), 0);
+        request.setProductQuantities(quantities);
+
+        orderDao.placeOrder(request);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Customer not found: 99999")
+    public void placeOrderShouldRejectMissingCustomer() {
+        OrderRequest request = createValidRequest();
+        request.setCustomerId(99999);
+
+        orderDao.placeOrder(request);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Product not found: 99999")
+    public void placeOrderShouldRejectMissingProduct() {
+        OrderRequest request = createValidRequest();
+        Map<Integer, Integer> quantities = new LinkedHashMap<>();
+        quantities.put(99999, 1);
+        request.setProductQuantities(quantities);
+
+        orderDao.placeOrder(request);
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Order status not found: в обработке")
+    public void placeOrderShouldRejectWhenInitialStatusIsMissing() {
+        deleteOrdersAndStatuses();
+
+        orderDao.placeOrder(createValidRequest());
+    }
+
+    private OrderRequest createValidRequest() {
+        OrderRequest request = new OrderRequest();
+        request.setCustomerId(dataSet.getFirstCustomerId());
+        request.addProduct(dataSet.getTvProductId(), 1);
+        request.setDeliveryAddress("Москва, ул. Тверская, д. 1");
+        request.setDeliveryFrom(LocalDateTime.of(2026, 3, 1, 10, 0));
+        request.setDeliveryTo(LocalDateTime.of(2026, 3, 1, 14, 0));
+        return request;
+    }
+
+    private void deleteOrdersAndStatuses() {
+        try (Session session = sessionFactory.openSession()) {
+            Transaction transaction = session.beginTransaction();
+            session.createQuery("delete from Delivery").executeUpdate();
+            session.createQuery("delete from OrderItem").executeUpdate();
+            session.createQuery("delete from CustomerOrder").executeUpdate();
+            session.createQuery("delete from OrderStatus").executeUpdate();
+            transaction.commit();
+        }
     }
 }

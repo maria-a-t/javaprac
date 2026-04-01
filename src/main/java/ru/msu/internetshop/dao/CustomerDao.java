@@ -7,9 +7,6 @@ import ru.msu.internetshop.model.Customer;
 
 public class CustomerDao extends AbstractDao {
 
-    public CustomerDao() {
-    }
-
     public CustomerDao(SessionFactory sessionFactory) {
         super(sessionFactory);
     }

@@ -15,9 +15,6 @@ import ru.msu.internetshop.model.ProductAttribute;
 
 public class ProductDao extends AbstractDao {
 
-    public ProductDao() {
-    }
-
     public ProductDao(SessionFactory sessionFactory) {
         super(sessionFactory);
     }
@@ -165,9 +162,6 @@ public class ProductDao extends AbstractDao {
 
     private Map<String, String> toAttributeMap(List<ProductAttribute> attributes) {
         Map<String, String> attributeMap = new LinkedHashMap<>();
-        if (attributes == null) {
-            return attributeMap;
-        }
         for (ProductAttribute attribute : attributes) {
             if (attribute == null) {
                 continue;
